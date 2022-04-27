@@ -1,0 +1,68 @@
+import machine as m
+import time as t
+
+duration = 150000  # this number of milliseconds
+
+n_element = 3
+samples = [0 for i in range(n_element)]
+for i in range(n_element):
+    samples[i] = 0
+
+
+def get_avg(a):
+    total = 0
+    for i in range(len(a)):
+        total += a[i]
+    return int(total / len(a))
+
+
+i = 0
+
+above_threshold_LED = m.Pin(2, m.Pin.OUT)  # Red LED
+below_threshold_LED = m.Pin(3, m.Pin.OUT)  # Green LED
+
+adc = m.ADC(m.Pin(26))  # Heart Monitor
+adc.read_u16()
+
+potent = m.ADC(m.Pin(27))  # Potentiometer
+potent.read_u16()
+
+start = t.ticks_ms()
+time = t.ticks_diff(t.ticks_ms(), start)
+print("Value, Time")
+above_threshold = False
+last_time = 0
+period = 0
+while time < duration:
+
+    # LED1.value(led1_value)
+    # if i % 1000 == 0:  # swap led_value on multiples of 1000
+    # led_value = not led1_value
+
+    sensor_value = adc.read_u16()
+    samples[i % n_element] = sensor_value
+    i += 1
+    avg_value = get_avg(samples)
+    time = t.ticks_diff(t.ticks_ms(), start)
+    threshold = potent.read_u16()
+
+    if avg_value > threshold:
+        if not above_threshold:
+            period = time - last_time
+            last_time = time
+            print(period)
+
+        above_threshold = True
+
+    else:
+        above_threshold = False
+
+    above_threshold_LED.value(above_threshold)
+    below_threshold_LED.value(not above_threshold)
+
+    # print ("{}, {}".format(sensor_value, time))        #print value and time
+    # print("{}, {}".format(samples, avg_value))  #print samples and average
+    # print(threshold)
+    t.sleep(0.001)
+
+above_threshold_LED.value(False)
