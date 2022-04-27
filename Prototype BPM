@@ -1,0 +1,9 @@
+from itertools import cycle
+import time
+import numpy as np
+
+p = cycle(np.array([935, 520, 1002, 1200]))
+
+while True:
+    time(0.1)
+    print("{:.0f}".format(60000/(next(p))))
