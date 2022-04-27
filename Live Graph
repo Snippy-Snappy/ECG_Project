@@ -1,0 +1,28 @@
+
+from datetime import datetime
+from matplotlib import pyplot
+from matplotlib.animation import FuncAnimation
+from itertools import cycle
+
+import numpy as np
+
+from random import randrange
+
+x_data, y_data = [], []
+
+figure = pyplot.figure()
+line, = pyplot.plot_date(x_data, y_data, '-')
+
+y = cycle(np.array([1, 1, 1.5, 1, 1, 0, 4, -1, 1, 1, 1, 2, 1, 1])) # This just represents the heart beat so it can be plotted. This is just a placeholder.
+
+def update(frame):
+    x_data.append(datetime.now())
+    y_data.append(next(y))
+    line.set_data(x_data, y_data)
+    figure.gca().relim()
+    figure.gca().autoscale_view()
+    return line,
+
+animation = FuncAnimation(figure, update, interval=100)
+
+pyplot.show()
