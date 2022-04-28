@@ -1,0 +1,20 @@
+import openpyxl
+
+wb = openpyxl.load_workbook("/Users/kincaidingram/Desktop/Data.xlsx") #This is directed to an excell file on my desktop won't work on other peoples computers
+print(type(wb))
+sheets = wb.sheetnames
+print(sheets)
+
+sh3 = wb['Sheet3']
+row = sh3.max_row
+column = sh3.max_column
+print(row)
+print(column)
+
+x = 10
+y = 5
+
+sh3.cell(row=next(x), column=y, value= 'Coding test')
+sh3.cell(row=5, column=2, value= 4)
+
+wb.save("Report3.xlsx")
