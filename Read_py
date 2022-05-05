@@ -17,6 +17,3 @@ while(1):
         # Print the contents of the serial data
         print(serialString.decode('Ascii'))
 
-        # Tell the device connected over the serial port that we recevied the data!
-        # The b at the beginning is used to indicate bytes!
-        serialPort.write(b"Thank you for sending data \r\n")
