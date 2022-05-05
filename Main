@@ -50,7 +50,7 @@ while time < duration:
         if not above_threshold:
             period = time - last_time
             last_time = time
-            print(period)
+            # print(period)
 
         above_threshold = True
 
