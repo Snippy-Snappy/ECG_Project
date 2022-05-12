@@ -1,0 +1,96 @@
+import datetime as dt
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+import serial
+import time as t
+
+# Create figure for plotting
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
+xs = []
+ys = []
+
+
+port_open = False
+num_port_open_attempts = 0
+while not port_open and num_port_open_attempts < 3:
+    try:
+        num_port_open_attempts += 1
+        print("try open COM Port, attempt {}".format(num_port_open_attempts))
+
+        serialPort = serial.Serial(port = "COM4", baudrate=115200,
+                                   bytesize=8, timeout=10, stopbits=serial.STOPBITS_ONE)
+        port_open = True
+    except:
+        print( "fail open, try again...")
+
+
+
+if not port_open:
+    print("unable to open serialPort")
+    quit()
+
+serialString = ""
+# This function is called periodically from FuncAnimation
+xpos = 0
+def get_xpos():
+    global xpos
+    xpos += 1
+    return xpos
+
+def read_heart_value():
+    try:
+        if (serialPort.in_waiting < 1):
+            return -1
+
+        serialString = serialPort.readline()
+        if len(serialString) < 1:
+            return -1
+
+        heart_val = serialString.decode('Ascii').rstrip('\n').rstrip('\r')
+
+        if len(heart_val) < 1:
+            return -1
+
+        return int(heart_val)
+    except:
+        print("fail read")
+        return -1
+
+def animate(i, xs, ys):
+    num_points_read = 0
+    heart_val = read_heart_value()
+
+    while heart_val > 0 and num_points_read < 1000:
+
+        # Add x and y to lists
+        xs.append(get_xpos())
+        ys.append(heart_val)
+        heart_val = read_heart_value()
+        num_points_read += 1
+
+    # if num_points_read < 1:
+    #     print("no points read")
+    #
+    # else:
+    #     print(num_points_read)
+
+    # Limit x and y lists to 20 items
+    view = 4000
+    xs = xs[-view:]
+    ys = ys[-view:]
+
+    # Draw x and y lists
+    ax.clear()
+    ax.plot(xs, ys)
+
+    # Format plot
+    plt.xticks(rotation=45, ha='right')
+    plt.subplots_adjust(bottom=0.30)
+    plt.grid(True)
+    plt.title('ECG Graph')
+    plt.ylabel('Voltage')
+  
+# Set up plot to call animate() function periodically
+ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=1)
+plt.show()
