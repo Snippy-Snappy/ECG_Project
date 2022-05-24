@@ -3,12 +3,25 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import serial
 import time as t
+import heartpy as hp
+
+import numpy as np
 
 # Create figure for plotting
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
 xs = []
 ys = []
+
+
+
+with open('20220517_204325.txt', 'r') as f:
+    data = f.read()
+
+test = [int(i) for i in data.split()]
+#print(test)
+data = test
+fs = 800  # example file 0 is sampled at 1000.0 Hz but due to delay
 
 
 port_open = False
@@ -22,7 +35,7 @@ while not port_open and num_port_open_attempts < 3:
                                    bytesize=8, timeout=10, stopbits=serial.STOPBITS_ONE)
         port_open = True
     except:
-        print( "fail open, try again...")
+        print( "fail open COM 4, try again...")
 
 
 
@@ -57,17 +70,38 @@ def read_heart_value():
         print("fail read")
         return -1
 
+bpi_array =  []
+
+def add_heart_value_to_bpi_samples(value):
+    global bpi_array
+    bpi_array.append(value)
+
+def calculate_bpi():
+    global bpi_array
+    if len(bpi_array) > 5000:
+        bpi_array = bpi_array[-15000:]
+        top = np.array(bpi_array)
+
+        working_data, measures = hp.process(top, fs, report_time=False)
+
+        return measures['bpm']
+
+
 def animate(i, xs, ys):
     num_points_read = 0
     heart_val = read_heart_value()
 
     while heart_val > 0 and num_points_read < 1000:
+        # Read temperature (Celsius) from TMP102
+
+        add_heart_value_to_bpi_samples(heart_val)
 
         # Add x and y to lists
         xs.append(get_xpos())
         ys.append(heart_val)
         heart_val = read_heart_value()
         num_points_read += 1
+    # print(bpi_array)
 
     # if num_points_read < 1:
     #     print("no points read")
@@ -76,7 +110,7 @@ def animate(i, xs, ys):
     #     print(num_points_read)
 
     # Limit x and y lists to 20 items
-    view = 4000
+    view = 1000
     xs = xs[-view:]
     ys = ys[-view:]
 
@@ -89,8 +123,12 @@ def animate(i, xs, ys):
     plt.subplots_adjust(bottom=0.30)
     plt.grid(True)
     plt.title('ECG Graph')
-    plt.ylabel('Voltage')
-  
+    try:
+        bpi = calculate_bpi()
+        plt.ylabel('bpi ' + str(round(bpi, 1)))
+    except:
+        plt.ylabel("Unable to get BPI")
+
 # Set up plot to call animate() function periodically
 ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=1)
 plt.show()
