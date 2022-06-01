@@ -16,10 +16,21 @@ def get_avg(a):
     return int(total / len(a))
 
 
+
 i = 0
 
+red_connect = m.Pin(4, m.Pin.IN)
+yellow_connect = m.Pin(5, m.Pin.IN)
+
 above_threshold_LED = m.Pin(2, m.Pin.OUT)  # Red LED
-below_threshold_LED = m.Pin(3, m.Pin.OUT)  # Green LED
+below_threshold_LED = m.Pin(3, m.Pin.OUT)  # Yellow LED
+
+def get_red_connect():
+    return red_connect.value() == 0
+
+
+def get_yellow_connect():
+    return yellow_connect.value() == 0
 
 adc = m.ADC(m.Pin(26))  # Heart Monitor
 adc.read_u16()
@@ -36,35 +47,34 @@ period = 0
 
 while True:
 
-    # LED1.value(led1_value)
-    # if i % 1000 == 0:  # swap led_value on multiples of 1000
-    # led_value = not led1_value
+    if get_yellow_connect() and get_red_connect():
+        # LED1.value(led1_value)
+        # if i % 1000 == 0:  # swap led_value on multiples of 1000
+        # led_value = not led1_value
 
-    sensor_value = adc.read_u16()
-    samples[i % n_element] = sensor_value
-    i += 1
-    avg_value = get_avg(samples)
-    time = t.ticks_diff(t.ticks_ms(), start)
-    threshold = potent.read_u16()
+        sensor_value = adc.read_u16()
+        samples[i % n_element] = sensor_value
+        i += 1
+        avg_value = get_avg(samples)
+        threshold = potent.read_u16()
 
-    if avg_value > threshold:
-        if not above_threshold:
-            period = time - last_time
-            last_time = time
-            # print(period)
+        if avg_value > threshold:
 
-        above_threshold = True
+            above_threshold = True
+
+        else:
+            above_threshold = False
+
+        above_threshold_LED.value(above_threshold)
+        below_threshold_LED.value(not above_threshold)
+
+        # print ("{}, {}".format(avg_value, time))        #print value and time
+        # print("{}, {}".format(samples, avg_value))  #print samples and average
+        # print(threshold)
+        print(avg_value)
 
     else:
-        above_threshold = False
+        above_threshold_LED.value(not get_red_connect())
+        below_threshold_LED.value(not get_yellow_connect())
 
-    above_threshold_LED.value(above_threshold)
-    below_threshold_LED.value(not above_threshold)
-
-    # print ("{}, {}".format(avg_value, time))        #print value and time
-    # print("{}, {}".format(samples, avg_value))  #print samples and average
-    # print(threshold)
-    print(avg_value)
     t.sleep(0.001)
-
-above_threshold_LED.value(False)
